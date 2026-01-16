@@ -127,7 +127,3 @@ We follow a strict professional workflow for contributions:
 Please ensure all new components adhere to the Glassmorphism design system guidelines found in `index.css`.
 
 ---
-
-## License
-
-This project is open-source and available under the [MIT License](LICENSE).
