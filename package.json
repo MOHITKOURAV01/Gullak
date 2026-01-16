@@ -1,0 +1,12 @@
+{
+    "name": "gullak-monorepo",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "dev": "cd Website && npm run dev",
+        "build": "cd Website && npm install && npm run build && cd .. && mkdir -p dist && cp -r Website/dist/* dist/"
+    },
+    "engines": {
+        "node": ">=18"
+    }
+}
