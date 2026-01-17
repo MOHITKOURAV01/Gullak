@@ -56,15 +56,13 @@ const DebtOptimizer = () => {
         setEmis(emis.filter(e => e.id !== id));
     };
 
-    const suggestions = useMemo(() => {
-        const sortedByRate = [...emis].sort((a, b) => b.rate - a.rate);
-        const sortedByBalance = [...emis].sort((a, b) => a.balance - b.balance);
-
-        return {
-            avalanche: sortedByRate[0], // Highest Interest First
-            snowball: sortedByBalance[0] // Smallest Balance First
-        };
-    }, [emis]);
+    // Use the custom hook for debt calculations
+    const { roadmap, totalInterest, baseline, suggestions, totalDuration } = useDebtCalculator(
+        emis,
+        income,
+        livingExpenses,
+        extraPayment
+    );
 
     const generatePDF = async () => {
         setIsExporting(true);
