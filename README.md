@@ -71,12 +71,20 @@ Gullak is built as a modern Monorepo, ensuring code sharing and consistency logi
 
 ---
 
+## New Features (Latest Update)
+*   **Express Backend**: Data is now synced to a Node.js backend (`/api`) for persistence across sessions.
+*   **Global Search**: Integrated `Cmd+K` style search for tools, features, and financial guides.
+*   **Intelligent Caching**: Uses a dual-layer approach (localStorage + Backend) for "Fast Load" performance.
+*   **Real-time Sync**: Expense data is automatically debounced and saved to the server.
+
+---
+
 ## Getting Started
 
 ### Prerequisites
 *   **Node.js**: Version 18.0.0 or higher.
 *   **Package Manager**: npm or yarn.
-*   **Mobile Development**: Expo Go app installed on your physical device, or Android Studio/Xcode for emulation.
+*   **Database**: Optional MongoDB (runs in-memory by default).
 
 ### Setup Instructions
 
@@ -86,32 +94,25 @@ Gullak is built as a modern Monorepo, ensuring code sharing and consistency logi
     cd Gullak
     ```
 
-2.  **Running the Web Platform**
+2.  **Install Global Dependencies**
     ```bash
-    # Navigate to the Website directory
-    cd Website
-    
-    # Install dependencies
     npm install
-    
-    # Start the development server
+    ```
+
+3.  **Running the Platform (Unified)**
+    ```bash
+    # This starts both the Website (Frontend) and the API (Backend)
     npm run dev
     ```
-    The application will launch at `http://localhost:5173`.
+    *   **Frontend**: `http://localhost:5173`
+    *   **Backend**: `http://localhost:5001`
 
-3.  **Running the Mobile Application**
+4.  **Running the Mobile Application**
     ```bash
-    # Open a new terminal and navigate to the App directory
     cd App
-    
-    # Install dependencies
     npm install
-    
-    # Start the Metro Bundler
     npx expo start
     ```
-    *   **Physical Device**: Scan the QR code displayed in the terminal using the Expo Go app.
-    *   **Simulator**: Press `i` for iOS Simulator or `a` for Android Emulator.
 
 ---
 
