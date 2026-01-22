@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { PieChart as RechartsPieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer, Legend } from 'recharts';
 import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 
 const ExpenseCalculator = () => {
     const INITIAL_CATEGORIES = [
@@ -35,7 +35,40 @@ const ExpenseCalculator = () => {
     useEffect(() => {
         localStorage.setItem('gullak_expenses', JSON.stringify(expenses));
         localStorage.setItem('gullak_income', income.toString());
+
+        // Sync to backend
+        const syncToBackend = async () => {
+            try {
+                await fetch('/api/expenses', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ expenses, income }),
+                });
+            } catch (error) {
+                console.log('Backend sync failed, using localStorage');
+            }
+        };
+
+        const timeoutId = setTimeout(syncToBackend, 2000); // Debounce
+        return () => clearTimeout(timeoutId);
     }, [expenses, income]);
+
+    // Initial load from backend
+    useEffect(() => {
+        const fetchExpenses = async () => {
+            try {
+                const res = await fetch('/api/expenses');
+                const data = await res.json();
+                if (data && data.expenses) {
+                    setExpenses(data.expenses);
+                    setIncome(data.income);
+                }
+            } catch (error) {
+                console.log('Failed to fetch from backend, using localStorage');
+            }
+        };
+        fetchExpenses();
+    }, []);
 
     const totalExpenses = useMemo(() =>
         expenses.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0)
@@ -165,28 +198,89 @@ const ExpenseCalculator = () => {
 
     // New Function: Export as PDF
     const exportPDF = async () => {
+        if (!contentRef.current) return;
         setIsExporting(true);
         try {
             const element = contentRef.current;
+
+            // Standardizing canvas capture
             const canvas = await html2canvas(element, {
-                scale: 2,
-                backgroundColor: '#000000',
+                scale: 1.5, // 1.5 is safer for memory than 2.0
+                backgroundColor: '#0a0a0a',
                 useCORS: true,
-                ignoreElements: (node) => node.id === 'no-print'
+                logging: false,
+                onclone: (clonedDoc) => {
+                    // Hide UI-only elements in the PDF
+                    const buttons = clonedDoc.querySelectorAll('button');
+                    buttons.forEach(btn => btn.style.display = 'none');
+                    const noPrint = clonedDoc.querySelectorAll('#no-print');
+                    noPrint.forEach(el => el.style.display = 'none');
+
+                    // FIX: Force standard colors to avoid "oklab" errors in html2canvas (Tailwind 4 issue)
+                    const style = clonedDoc.createElement('style');
+                    style.innerHTML = `
+                        :root {
+                            --color-background: #0A0A0A !important;
+                            --color-surface: #171717 !important;
+                            --color-primary: #FFD700 !important;
+                            --color-secondary: #10B981 !important;
+                        }
+                        /* Fallback for Tailwind 4 gray shades */
+                        .text-gray-200 { color: #e5e7eb !important; }
+                        .text-gray-300 { color: #d1d5db !important; }
+                        .text-gray-400 { color: #9ca3af !important; }
+                        .text-gray-500 { color: #6b7280 !important; }
+                        .text-gray-600 { color: #4b5563 !important; }
+                        
+                        /* Fix gradients which html2canvas sometimes chokes on with background-clip: text */
+                        .text-gradient {
+                            background: none !important;
+                            -webkit-text-fill-color: #FFD700 !important;
+                            color: #FFD700 !important;
+                        }
+                        
+                        /* Remove animations that might mess up capture */
+                        * { 
+                            animation: none !important; 
+                            transition: none !important; 
+                        }
+                    `;
+                    clonedDoc.head.appendChild(style);
+
+                    // Ensure full visibility
+                    const container = clonedDoc.querySelector('.max-w-7xl');
+                    if (container) container.style.padding = '20px';
+                }
             });
 
             const imgData = canvas.toDataURL('image/png');
             const pdf = new jsPDF('p', 'mm', 'a4');
             const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+            const imgProps = pdf.getImageProperties(imgData);
+            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-            pdf.save('Gullak_Financial_Plan.pdf');
+            let heightLeft = pdfHeight;
+            let position = 0;
+            const pageHeight = pdf.internal.pageSize.getHeight();
+
+            // Handle multi-page
+            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+            heightLeft -= pageHeight;
+
+            while (heightLeft >= 0) {
+                position = heightLeft - pdfHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+                heightLeft -= pageHeight;
+            }
+
+            pdf.save(`Gullak_Report_${new Date().toLocaleDateString().replace(/\//g, '-')}.pdf`);
         } catch (error) {
-            console.error('PDF Export failed:', error);
-            alert('Failed to generate PDF. Please try again.');
+            console.error('PDF Generation Crash:', error);
+            alert('PDF Export Error: ' + (error.message || 'Check console for details'));
+        } finally {
+            setIsExporting(false);
         }
-        setIsExporting(false);
     };
 
     return (
@@ -328,7 +422,7 @@ const ExpenseCalculator = () => {
                                                     value={expense.category}
                                                     onChange={(e) => updateRow(expense.id, 'category', e.target.value)}
                                                     className={`w-full bg-transparent text-xs font-bold outline-none cursor-pointer ${expense.category === 'Fixed' ? 'text-primary' :
-                                                            expense.category === 'Variable' ? 'text-orange-400' : 'text-red-400'
+                                                        expense.category === 'Variable' ? 'text-orange-400' : 'text-red-400'
                                                         }`}
                                                 >
                                                     <option value="Fixed">FIXED</option>
