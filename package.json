@@ -3,8 +3,21 @@
     "version": "1.0.0",
     "private": true,
     "scripts": {
-        "dev": "cd Website && npm run dev",
-        "build": "cd Website && npm install && npm run build && cd .. && mkdir -p dist && cp -r Website/dist/* dist/"
+        "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+        "dev:frontend": "cd Website && npm run dev",
+        "dev:backend": "node api/server.js",
+        "build": "cd Website && npm install && npm run build && cd .. && mkdir -p dist && cp -r Website/dist/* dist/",
+        "start": "node api/server.js"
+    },
+    "dependencies": {
+        "express": "^4.18.2",
+        "cors": "^2.8.5",
+        "dotenv": "^16.3.1",
+        "mongoose": "^8.0.0"
+    },
+    "devDependencies": {
+        "concurrently": "^8.2.2",
+        "nodemon": "^3.0.1"
     },
     "engines": {
         "node": ">=18"

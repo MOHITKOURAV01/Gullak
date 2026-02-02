@@ -3,6 +3,7 @@ import Hero from '../components/Hero';
 import ProblemSolution from '../components/ProblemSolution';
 import EmiSimulator from '../components/EmiSimulator';
 import Features from '../components/Features';
+import SmartInsights from '../components/SmartInsights';
 
 const Home = () => {
     return (
@@ -11,6 +12,7 @@ const Home = () => {
             <ProblemSolution />
             <EmiSimulator />
             <Features />
+            <SmartInsights />
 
             {/* Call to Action Section */}
             <section className="py-24">
