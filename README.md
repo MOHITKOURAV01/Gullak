@@ -28,7 +28,7 @@ Gullak serves as a central repository for all financial data—assets, liabiliti
 
 ---
 
-## detailed Features
+## Detailed Features
 
 ### Core Modules
 
