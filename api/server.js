@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const speakeasy = require('speakeasy');
 const QRCode = require('qrcode');
+const nodemailer = require('nodemailer');
 require('dotenv').config();
 
 const app = express();
@@ -12,6 +13,33 @@ const PORT = process.env.PORT || 5001;
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// --- Email Config ---
+const transporter = nodemailer.createTransport({
+    service: 'gmail', // Use 'gmail' or your provider
+    auth: {
+        user: process.env.EMAIL_USER || 'your-email@gmail.com', // Set these in .env
+        pass: process.env.EMAIL_PASS || 'your-app-password'
+    }
+});
+
+const sendEmail = async (to, subject, text) => {
+    if (!process.env.EMAIL_USER) {
+        console.log(`[MOCK EMAIL] To: ${to} | Subject: ${subject} | Body: ${text}`);
+        return;
+    }
+    try {
+        await transporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to,
+            subject,
+            text
+        });
+        console.log(`Email sent to ${to}`);
+    } catch (err) {
+        console.error("Email error:", err);
+    }
+};
 
 // --- File-Based Database Setup ---
 const DB_FILE = path.join(__dirname, 'db.json');
@@ -96,11 +124,13 @@ app.post('/api/auth/login', (req, res) => {
         });
     }
 
+    sendEmail(email, "New Login Detected", "You just logged into your Gullak account.");
+
     const { password: _, twoFactorSecret: __, ...userWithoutPassword } = user;
     res.json({ message: 'Login successful', user: userWithoutPassword });
 });
 
-// Login (Step 2: Verify 2FA)
+// Login (Step 2: Verify 2FA - App or Email OTP)
 app.post('/api/auth/login/2fa', (req, res) => {
     const { userId, token } = req.body;
     const db = readData();
@@ -108,18 +138,51 @@ app.post('/api/auth/login/2fa', (req, res) => {
 
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    const verified = speakeasy.totp.verify({
-        secret: user.twoFactorSecret,
-        encoding: 'base32',
-        token: token
-    });
+    let verified = false;
+
+    // Check 1: Time-based OTP (Google Authenticator)
+    if (user.twoFactorSecret) {
+        verified = speakeasy.totp.verify({
+            secret: user.twoFactorSecret,
+            encoding: 'base32',
+            token: token
+        });
+    }
+
+    // Check 2: Email OTP fallback
+    if (!verified && user.emailOtp && user.emailOtp === token) {
+        if (Date.now() < user.emailOtpExpires) {
+            verified = true;
+            delete user.emailOtp;        // Consume OTP
+            delete user.emailOtpExpires;
+            writeData(db);
+        }
+    }
 
     if (verified) {
+        sendEmail(user.email, "Login Successful", "2FA Verification completed successfully.");
         const { password: _, twoFactorSecret: __, ...userWithoutPassword } = user;
         res.json({ message: 'Login successful', user: userWithoutPassword });
     } else {
         res.status(401).json({ message: 'Invalid 2FA Token' });
     }
+});
+
+// Send Email OTP for 2FA
+app.post('/api/auth/login/2fa/send-email', (req, res) => {
+    const { userId } = req.body;
+    const db = readData();
+    const user = db.users.find(u => u.id === userId);
+
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digit
+    user.emailOtp = otp;
+    user.emailOtpExpires = Date.now() + 5 * 60000; // 5 mins
+    writeData(db);
+
+    sendEmail(user.email, "Your 2FA Login Code", `Your verification code is: ${otp}`);
+    res.json({ message: 'OTP sent to email' });
 });
 
 // 2FA Setup: Generate Secret & QR
