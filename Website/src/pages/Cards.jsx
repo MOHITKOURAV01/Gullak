@@ -3,6 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { CreditCard, Star, Zap, ShoppingBag, Plane, Coffee, ShieldCheck, ChevronRight, Info, ExternalLink, CheckCircle2, Sparkles, X, Search } from 'lucide-react';
 
+// API Configuration
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+
 const CardDemo = () => {
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [selectedCountry, setSelectedCountry] = useState('🇮🇳 India');
@@ -45,7 +48,7 @@ const CardDemo = () => {
         setAiInput('');
 
         try {
-            const response = await fetch('http://localhost:5001/api/ai/card-expert', {
+            const response = await fetch(`${API_URL}/api/ai/card-expert`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

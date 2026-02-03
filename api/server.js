@@ -41,34 +41,52 @@ const sendEmail = async (to, subject, text) => {
     }
 };
 
-// --- File-Based Database Setup ---
+// --- Database Setup ---
+const mongoose = require('mongoose');
 const DB_FILE = path.join(__dirname, 'db.json');
 
-// Helper: Read Database
-const readData = () => {
-    if (!fs.existsSync(DB_FILE)) {
-        // Initialize default structure if file prevents errors
-        const defaultData = { users: [], expenses: {}, searchHistory: [] };
-        writeData(defaultData);
-        return defaultData;
-    }
-    try {
-        const data = fs.readFileSync(DB_FILE, 'utf8');
-        return JSON.parse(data);
-    } catch (err) {
-        console.error("Error reading DB:", err);
-        return { users: [], expenses: {}, searchHistory: [] };
+let db = { users: [], expenses: {}, searchHistory: [] };
+
+// Initialize MongoDB or JSON File
+const initDB = async () => {
+    if (process.env.MONGODB_URI) {
+        try {
+            await mongoose.connect(process.env.MONGODB_URI);
+            console.log('Connected to MongoDB Atlas');
+        } catch (err) {
+            console.error('MongoDB connection error:', err);
+            loadJSONDB();
+        }
+    } else {
+        loadJSONDB();
     }
 };
 
-// Helper: Write Database
-const writeData = (data) => {
-    try {
-        fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
-    } catch (err) {
-        console.error("Error writing DB:", err);
+const loadJSONDB = () => {
+    if (!fs.existsSync(DB_FILE)) {
+        fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
+    } else {
+        try {
+            const data = fs.readFileSync(DB_FILE, 'utf8');
+            db = JSON.parse(data);
+        } catch (err) {
+            console.error("Error reading DB:", err);
+        }
     }
+    console.log(`JSON Database active at: ${DB_FILE}`);
 };
+
+const writeData = (data) => {
+    db = data;
+    if (!process.env.MONGODB_URI) {
+        fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+    }
+    // Note: In real app with MongoDB, you'd use Mongoose models instead of this writeData helper.
+};
+
+const readData = () => db;
+
+initDB();
 
 // --- API Routes ---
 
