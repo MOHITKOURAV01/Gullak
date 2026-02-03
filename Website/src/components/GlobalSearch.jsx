@@ -125,11 +125,15 @@ const GlobalSearch = () => {
         <>
             <button
                 onClick={() => setIsOpen(true)}
-                className="p-2 hover:bg-white/5 rounded-full transition-colors text-gray-400 hover:text-primary group flex items-center gap-2"
-                title="Search Gullak"
+                className="flex items-center gap-3 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:border-primary/30 hover:bg-white/10 transition-all group lg:min-w-[140px]"
+                title="Search Gullak (⌘K)"
             >
-                <Search size={20} />
-                <span className="hidden lg:inline text-[10px] font-black text-gray-500 uppercase tracking-widest border border-white/10 px-1.5 py-0.5 rounded-md bg-white/5">⌘K</span>
+                <Search size={16} className="text-gray-400 group-hover:text-primary transition-colors" />
+                <span className="hidden lg:inline text-xs font-bold text-gray-500 group-hover:text-gray-300">Search</span>
+                <kbd className="hidden lg:inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/10 border border-white/10 text-[10px] text-gray-400 font-mono font-bold leading-none">
+                    <span>⌘</span>
+                    <span>K</span>
+                </kbd>
             </button>
 
             <AnimatePresence>
