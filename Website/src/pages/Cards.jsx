@@ -243,6 +243,66 @@ const CardDemo = () => {
             fee: "$250 Annual Fee",
             rating: 4.7,
             image: ""
+        },
+        // --- INDIA PREMIUM ---
+        {
+            id: 231,
+            name: "HDFC Infinia Metal",
+            type: "Credit Card",
+            color: "from-slate-900 to-black",
+            category: "Luxury",
+            country: "🇮🇳 India",
+            bank: "HDFC BANK",
+            benefits: [
+                "Unlimited Lounge Access Worldwide",
+                "1+1 on Movie Tickets & Dining",
+                "Global Concierge 24x7",
+                "Lowest Forex Markup (2%)"
+            ],
+            bestFor: "Ultra-High Net Worth",
+            fee: "₹12,500 + Taxes",
+            rating: 5.0,
+            image: ""
+        },
+        // --- JAPAN ---
+        {
+            id: 801,
+            name: "Rakuten Card",
+            type: "Credit Card",
+            color: "from-red-600 to-red-800",
+            category: "Personal",
+            country: "🇯🇵 Japan",
+            bank: "RAKUTEN",
+            benefits: [
+                "1% point back on every 100 JPY",
+                "3x points on Rakuten Ichiba",
+                "Overseas travel insurance",
+                "No annual fee"
+            ],
+            bestFor: "Everyday Spends & Shopping",
+            fee: "0 JPY (Lifetime)",
+            rating: 4.8,
+            image: ""
+        },
+        // --- HONG KONG ---
+        {
+            id: 901,
+            name: "HSBC Red Credit Card",
+            type: "Credit Card",
+            color: "from-red-700 to-red-950",
+            category: "Personal",
+            country: "🇭🇰 Hong Kong",
+            bank: "HSBC HK",
+            benefits: [
+                "4% RewardCash on online shopping",
+                "No minimum spend requirement",
+                "Points never expire",
+                "Instant approval through app"
+            ],
+            bestFor: "Online Shoppers in HK",
+            fee: "$0 Annual Fee",
+            rating: 4.9,
+            image: ""
         }
     ];
 
