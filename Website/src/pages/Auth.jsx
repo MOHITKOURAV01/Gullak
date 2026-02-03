@@ -10,9 +10,11 @@ const Auth = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [emailOtpSent, setEmailOtpSent] = useState(false);
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
+        // ... (existing logic) ...
         e.preventDefault();
         setIsLoading(true);
         setError('');
@@ -42,7 +44,6 @@ const Auth = () => {
                 body: JSON.stringify(body)
             });
 
-            // Check if response is JSON
             const contentType = res.headers.get("content-type");
             if (!contentType || !contentType.includes("application/json")) {
                 throw new Error("Server is unreachable or offline. Please run 'npm run dev' from the root folder.");
@@ -54,7 +55,6 @@ const Auth = () => {
                 throw new Error(data.message || 'Action failed');
             }
 
-            // Handle Success Cases
             if (mode === 'forgot') {
                 setSuccess(data.message);
                 setTimeout(() => setMode('login'), 3000);
@@ -81,10 +81,32 @@ const Auth = () => {
         }
     };
 
+    const handleSendEmailOtp = async () => {
+        if (!tempUserId) return;
+        setIsLoading(true);
+        try {
+            const res = await fetch('/api/auth/login/2fa/send-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: tempUserId })
+            });
+
+            if (res.ok) {
+                setEmailOtpSent(true);
+                setSuccess('OTP sent to your registered email.');
+            } else {
+                throw new Error('Failed to send email OTP');
+            }
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const completeLogin = (user) => {
         localStorage.setItem('gullak_user', JSON.stringify(user));
         navigate('/calculate-expenses');
-        // Small delay to ensure navigation, then reload to update navbar state
         setTimeout(() => window.location.reload(), 100);
     };
 
@@ -230,6 +252,12 @@ const Auth = () => {
                                 </motion.div>
                             )}
 
+
+                            // ... (existing helper functions) ...
+
+                            return (
+                            // ... (existing JSX structure) ...
+
                             {/* 2FA Token Field */}
                             {mode === 'verify-2fa' && (
                                 <motion.div
@@ -249,6 +277,23 @@ const Auth = () => {
                                         onChange={(e) => setFormData({ ...formData, token: e.target.value.replace(/\D/g, '') })}
                                         className="w-full bg-white/5 border border-primary/50 rounded-2xl py-4 pl-12 pr-4 text-white text-xl tracking-[0.5em] font-mono text-center focus:outline-none focus:border-primary transition-all shadow-[0_0_20px_rgba(255,215,0,0.1)]"
                                     />
+
+                                    <div className="text-center mt-4">
+                                        <p className="text-xs text-gray-400 mb-2">Can't access your authenticator app?</p>
+                                        {!emailOtpSent ? (
+                                            <button
+                                                type="button"
+                                                onClick={handleSendEmailOtp}
+                                                className="text-xs font-bold text-primary hover:text-white transition-colors underline decoration-dotted underline-offset-4"
+                                            >
+                                                Send Code via Email
+                                            </button>
+                                        ) : (
+                                            <span className="text-xs font-bold text-green-400 flex items-center justify-center gap-1">
+                                                <CheckCircle2 size={12} /> Code sent to email
+                                            </span>
+                                        )}
+                                    </div>
                                 </motion.div>
                             )}
                         </AnimatePresence>
