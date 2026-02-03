@@ -110,7 +110,21 @@ const CardDemo = () => {
     const categories = ['All', 'Students', 'Personal', 'Business', 'Travelers', 'Luxury'];
     const countries = ['🇮🇳 India', '🇺🇸 USA', '🇬🇧 UK', '🇦🇪 UAE', '🇨🇦 Canada', '🇪🇺 Europe', '🇯🇵 Japan', '🇭🇰 Hong Kong', '🇸🇬 Singapore', '🇦🇺 Australia', 'Global'];
 
-    return null;
+    const filteredCards = cardData.filter(card => {
+        const matchesCategory = selectedCategory === 'All' || card.category === selectedCategory;
+        const matchesCountry = selectedCountry === 'Global' || card.country === selectedCountry;
+        const matchesSearch = card.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            card.bank.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesCategory && matchesCountry && matchesSearch;
+    });
+
+    return (
+        <div className="pt-28 pb-20 min-h-screen bg-background text-white">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                {/* Header and filters will go here */}
+            </div>
+        </div>
+    );
 };
 
 export default CardDemo;
