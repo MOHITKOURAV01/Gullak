@@ -307,6 +307,7 @@ const ExpenseCalculator = () => {
 
     return (
         <div className="pt-28 pb-16 min-h-screen bg-background text-white" ref={contentRef}>
+
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
                 {/* Header Section */}
