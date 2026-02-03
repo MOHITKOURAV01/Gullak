@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
-const mongoose = require('mongoose');
+const fs = require('fs');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -10,18 +11,45 @@ const PORT = process.env.PORT || 5001;
 app.use(cors());
 app.use(express.json());
 
-// In-memory storage for demonstration (if MongoDB is not connected)
-let searchHistory = [];
-let userExpenses = [];
-let users = []; // New users array
+// --- File-Based Database Setup ---
+const DB_FILE = path.join(__dirname, 'db.json');
 
-// API Routes
+// Helper: Read Database
+const readData = () => {
+    if (!fs.existsSync(DB_FILE)) {
+        // Initialize default structure if file prevents errors
+        const defaultData = { users: [], expenses: {}, searchHistory: [] };
+        writeData(defaultData);
+        return defaultData;
+    }
+    try {
+        const data = fs.readFileSync(DB_FILE, 'utf8');
+        return JSON.parse(data);
+    } catch (err) {
+        console.error("Error reading DB:", err);
+        return { users: [], expenses: {}, searchHistory: [] };
+    }
+};
+
+// Helper: Write Database
+const writeData = (data) => {
+    try {
+        fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+    } catch (err) {
+        console.error("Error writing DB:", err);
+    }
+};
+
+// --- API Routes ---
 
 // 0. Authentication
+
+// Signup
 app.post('/api/auth/signup', (req, res) => {
     const { name, email, password } = req.body;
+    const db = readData();
 
-    if (users.find(u => u.email === email)) {
+    if (db.users.find(u => u.email === email)) {
         return res.status(400).json({ message: 'Email already exists' });
     }
 
@@ -29,18 +57,27 @@ app.post('/api/auth/signup', (req, res) => {
         id: Date.now().toString(),
         name,
         email,
-        password, // In real app, hash this!
-        joined: new Date()
+        password, // In a real production app, you MUST hash this password!
+        joined: new Date().toISOString()
     };
 
-    users.push(newUser);
+    db.users.push(newUser);
+    
+    // Initialize empty expenses for the new user
+    db.expenses[newUser.id] = { expenses: [], income: 50000, updatedAt: new Date() };
+    
+    writeData(db);
+
     const { password: _, ...userWithoutPassword } = newUser;
-    res.status(201).json({ message: 'User created', user: userWithoutPassword });
+    res.status(201).json({ message: 'User created successfully', user: userWithoutPassword });
 });
 
+// Login
 app.post('/api/auth/login', (req, res) => {
     const { email, password } = req.body;
-    const user = users.find(u => u.email === email && u.password === password);
+    const db = readData();
+    
+    const user = db.users.find(u => u.email === email && u.password === password);
 
     if (!user) {
         return res.status(401).json({ message: 'Invalid credentials' });
@@ -50,57 +87,80 @@ app.post('/api/auth/login', (req, res) => {
     res.json({ message: 'Login successful', user: userWithoutPassword });
 });
 
+// Forgot Password (Mock)
 app.post('/api/auth/forgot-password', (req, res) => {
     const { email } = req.body;
-    const user = users.find(u => u.email === email);
+    const db = readData();
+    const user = db.users.find(u => u.email === email);
 
     if (!user) {
         return res.status(404).json({ message: 'No account found with this email' });
     }
 
-    // In a real app, send an email. For demo, we'll log it to console.
-    console.log(`[AUTH] Password Reset Request for ${email}: Password is "${user.password}"`);
-    res.json({ message: 'Password reset link sent to your email (Demo: Check server console)' });
+    console.log(`[AUTH] Password Reset for ${email}: ${user.password}`);
+    res.json({ message: 'Password recovery instruction sent (Check server console for demo)' });
 });
 
-// 1. Search History
+// 1. Search History (Global for now, can be made user-specific)
 app.get('/api/search/history', (req, res) => {
-    res.json(searchHistory.slice(0, 10));
+    const db = readData();
+    res.json(db.searchHistory.slice(0, 10));
 });
 
 app.post('/api/search/history', (req, res) => {
     const { query, timestamp } = req.body;
+    const db = readData();
+    
     const newEntry = { id: Date.now().toString(), query, timestamp: timestamp || new Date() };
-    searchHistory = [newEntry, ...searchHistory].slice(0, 50); // Keep last 50
+    db.searchHistory = [newEntry, ...db.searchHistory].slice(0, 50);
+    
+    writeData(db);
     res.status(201).json(newEntry);
 });
 
-// 2. Expense Data (Save/Load)
+// 2. Expense Data (User Specific)
+
+// Get Expenses
 app.get('/api/expenses', (req, res) => {
-    res.json(userExpenses);
+    const userId = req.query.userId; // Expect userId in query param
+    const db = readData();
+    
+    if (!userId) {
+        // Fallback for backward compatibility or guest mode (returns global/first or empty)
+        // For now, let's return a default structure if no user
+        return res.json({ expenses: [], income: 0 });
+    }
+
+    const userData = db.expenses[userId] || { expenses: [], income: 50000 };
+    res.json(userData);
 });
 
+// Save Expenses
 app.post('/api/expenses', (req, res) => {
-    const { expenses, income } = req.body;
-    userExpenses = { expenses, income, updatedAt: new Date() };
-    res.status(200).json({ message: 'Saved successfully', data: userExpenses });
+    const { userId, expenses, income } = req.body;
+    
+    if (!userId) {
+        return res.status(400).json({ message: 'User ID is required to save data' });
+    }
+
+    const db = readData();
+    db.expenses[userId] = { 
+        expenses, 
+        income, 
+        updatedAt: new Date().toISOString() 
+    };
+
+    writeData(db);
+    res.status(200).json({ message: 'Saved successfully', data: db.expenses[userId] });
 });
 
 // 3. Health Check
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', server: 'Gullak Backend', version: '1.0.0' });
+    res.json({ status: 'ok', server: 'Gullak Local Backend', storage: 'JSON File' });
 });
 
 // Start Server
 app.listen(PORT, () => {
     console.log(`Gullak Backend running on http://localhost:${PORT}`);
+    console.log(`Persistent storage active at: ${DB_FILE}`);
 });
-
-// Optional: MongoDB Connection
-if (process.env.MONGODB_URI) {
-    mongoose.connect(process.env.MONGODB_URI)
-        .then(() => console.log('Connected to MongoDB'))
-        .catch(err => console.error('MongoDB connection error:', err));
-} else {
-    console.log('No MongoDB URI found, using in-memory storage.');
-}
