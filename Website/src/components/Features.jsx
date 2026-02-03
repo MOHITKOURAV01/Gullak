@@ -8,7 +8,8 @@ import {
     Smartphone,
     Target,
     BarChart3,
-    SearchCheck
+    SearchCheck,
+    CreditCard
 } from 'lucide-react';
 
 const FeatureCard = ({ icon: Icon, title, description, delay }) => (
@@ -50,9 +51,9 @@ const Features = () => {
             description: "Get a monthly financial health score (0-100) based on your savings ratio, EMI burden, and spending habits."
         },
         {
-            icon: Calculator,
-            title: "Expense Planner",
-            description: "A professional-grade monthly budget sheet to track every rupee and identify where your money is leaking."
+            icon: CreditCard,
+            title: "Card Vault",
+            description: "Explore a curated list of premium credit & debit cards. Compare rewards, annual fees, and discover the best card for your lifestyle."
         },
         {
             icon: Smartphone,
