@@ -73,6 +73,7 @@ Gullak is built as a modern Monorepo, ensuring code sharing and consistency logi
 
 ## New Features (Latest Update)
 *   **Express Backend**: Data is now synced to a Node.js backend (`/api`) for persistence across sessions.
+*   **Two-Factor Authentication (2FA)**: Secure logic with Google Authenticator and Email OTP fallback.
 *   **Global Search**: Integrated `Cmd+K` style search for tools, features, and financial guides.
 *   **Intelligent Caching**: Uses a dual-layer approach (localStorage + Backend) for "Fast Load" performance.
 *   **Real-time Sync**: Expense data is automatically debounced and saved to the server.
