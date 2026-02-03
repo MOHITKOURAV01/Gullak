@@ -237,6 +237,80 @@ app.post('/api/expenses', (req, res) => {
     res.status(200).json({ message: 'Saved successfully', data: db.expenses[userId] });
 });
 
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+// Gemini Setup
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+
+// API Routes
+
+// ... (previous routes)
+
+// 4. Card Expert AI Assistant
+app.post('/api/ai/card-expert', async (req, res) => {
+    const { cardName, cardData, userMessage, history } = req.body;
+    console.log(`[AI Request] User: ${userMessage.substring(0, 50)}... Card: ${cardName}`);
+
+    if (!process.env.GEMINI_API_KEY) {
+        console.error('SERVER ERROR: GEMINI_API_KEY not found in .env');
+        return res.status(500).json({ error: 'Gemini API Key is not configured.' });
+    }
+
+    try {
+        // Use gemini-flash-lite-latest as it has a separate/higher quota than full flash
+        const model = genAI.getGenerativeModel({ model: "gemini-flash-lite-latest" });
+
+        const historyText = history ? history.map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`).join('\n') : '';
+
+        const personaPrompt = `
+You are "Gullak AI" from meraGullak.com 🇮🇳.
+
+MISSION:
+Always show the user "Paisa Vasool" by telling them "Kitna bachega" (How much they save).
+If they spend 50,000, calculate the exact cashback or points value based on the card data.
+
+FEATURED TOP CARDS (Recommend these for general queries):
+1. HDFC Millennia: 5% Cashback on shopping (Save 2,500 on 50k).
+2. Axis Atlas: 5 Miles per 100 on travel.
+3. Amex Platinum: Luxury Lounges & massive travel credits.
+4. IDFC First WOW: 6X Rewards & Zero Fee.
+
+FORBIDDEN SYMBOLS:
+- Never use ** (bolding).
+- Never use - (hyphens/bullets). 
+- Use plain text and new lines.
+
+PERSONA:
+- Super short.
+- Only card and savings talk.
+- Natural Hinglish.
+
+CONTEXT:
+Card: ${cardName}
+Data: ${JSON.stringify(cardData, null, 2)}
+
+HISTORY:
+${historyText}
+
+USER MESSAGE: ${userMessage}
+
+Calculate savings (Kitna bachega) clearly. No bolding. No hyphens.
+`;
+
+        const result = await model.generateContent(personaPrompt);
+        const response = await result.response;
+        const text = response.text();
+
+        console.log(`[AI Response] Length: ${text.length} chars`);
+        res.json({ reply: text });
+    } catch (error) {
+        console.error('--- Gemini Error Details ---');
+        console.error('Message:', error.message);
+        if (error.response) console.error('Response Data:', error.response.data);
+        res.status(500).json({ error: 'Failed to fetch response from AI', details: error.message });
+    }
+});
+
 // 3. Health Check
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', server: 'Gullak Local Backend', storage: 'JSON File' });
