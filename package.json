@@ -5,11 +5,12 @@
     "scripts": {
         "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
         "dev:frontend": "cd Website && npm run dev",
-        "dev:backend": "node api/server.js",
+        "dev:backend": "nodemon api/server.js",
         "build": "cd Website && npm install && npm run build && cd .. && mkdir -p dist && cp -r Website/dist/* dist/",
         "start": "node api/server.js"
     },
     "dependencies": {
+        "@google/generative-ai": "^0.24.1",
         "cors": "^2.8.5",
         "dotenv": "^16.3.1",
         "express": "^4.18.2",
