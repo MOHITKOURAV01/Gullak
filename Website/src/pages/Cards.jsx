@@ -281,6 +281,30 @@ const CardDemo = () => {
                         </button>
                     </div>
                 )}
+
+                {/* Comparison Logic Hint */}
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    className="mt-20 glass p-8 md:p-12 rounded-[3rem] border-primary/10 bg-primary/5 text-center relative overflow-hidden"
+                >
+                    <div className="absolute top-0 left-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] -ml-32 -mt-32"></div>
+                    <div className="relative z-10">
+                        <h2 className="text-3xl font-black mb-6">Confused which one to pick?</h2>
+                        <p className="text-gray-400 max-w-2xl mx-auto mb-8">
+                            Our AI Munshi can analyze your monthly expense data and suggest the exact card
+                            that would have saved you the most money in the last 30 days.
+                        </p>
+                        <div className="flex flex-wrap justify-center gap-4">
+                            <button className="px-8 py-4 bg-primary text-background font-bold rounded-2xl shadow-[0_0_30px_rgba(255,215,0,0.3)] hover:scale-105 transition-all">
+                                Connect My Bank (Coming Soon)
+                            </button>
+                            <button className="px-8 py-4 bg-white/5 border border-white/10 font-bold rounded-2xl hover:bg-white/10 transition-all">
+                                Use Manual Spends
+                            </button>
+                        </div>
+                    </div>
+                </motion.div>
             </div>
         </div>
     );
