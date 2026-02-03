@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, User, ArrowRight, Wallet, CheckCircle2, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, Wallet, CheckCircle2, ShieldCheck, AlertTriangle, Smartphone } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 
 const Auth = () => {
-    const [mode, setMode] = useState('login'); // 'login', 'signup', 'forgot'
-    const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+    const [mode, setMode] = useState('login'); // 'login', 'signup', 'forgot', 'verify-2fa'
+    const [formData, setFormData] = useState({ name: '', email: '', password: '', token: '' });
+    const [tempUserId, setTempUserId] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -19,14 +20,26 @@ const Auth = () => {
 
         try {
             let endpoint = '';
-            if (mode === 'login') endpoint = '/api/auth/login';
-            else if (mode === 'signup') endpoint = '/api/auth/signup';
-            else endpoint = '/api/auth/forgot-password';
+            let body = {};
+
+            if (mode === 'login') {
+                endpoint = '/api/auth/login';
+                body = { email: formData.email, password: formData.password };
+            } else if (mode === 'signup') {
+                endpoint = '/api/auth/signup';
+                body = formData;
+            } else if (mode === 'forgot') {
+                endpoint = '/api/auth/forgot-password';
+                body = { email: formData.email };
+            } else if (mode === 'verify-2fa') {
+                endpoint = '/api/auth/login/2fa';
+                body = { userId: tempUserId, token: formData.token };
+            }
 
             const res = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(body)
             });
 
             // Check if response is JSON
@@ -41,19 +54,38 @@ const Auth = () => {
                 throw new Error(data.message || 'Action failed');
             }
 
+            // Handle Success Cases
             if (mode === 'forgot') {
                 setSuccess(data.message);
                 setTimeout(() => setMode('login'), 3000);
-            } else {
-                localStorage.setItem('gullak_user', JSON.stringify(data.user));
-                navigate('/calculate-expenses');
-                window.location.reload();
+            }
+            else if (mode === 'login') {
+                if (data.require2fa) {
+                    setTempUserId(data.userId);
+                    setMode('verify-2fa');
+                    setSuccess('Please enter your 2FA code.');
+                } else {
+                    completeLogin(data.user);
+                }
+            }
+            else if (mode === 'verify-2fa') {
+                completeLogin(data.user);
+            }
+            else { // signup
+                completeLogin(data.user);
             }
         } catch (err) {
             setError(err.message);
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const completeLogin = (user) => {
+        localStorage.setItem('gullak_user', JSON.stringify(user));
+        navigate('/calculate-expenses');
+        // Small delay to ensure navigation, then reload to update navbar state
+        setTimeout(() => window.location.reload(), 100);
     };
 
     return (
@@ -114,11 +146,14 @@ const Auth = () => {
                 <div className="p-8 md:p-16 flex flex-col justify-center bg-white/[0.01]">
                     <div className="mb-10">
                         <h1 className="text-3xl font-black mb-2">
-                            {mode === 'login' ? 'Welcome Back' : mode === 'signup' ? 'Create Account' : 'Reset Password'}
+                            {mode === 'login' ? 'Welcome Back' :
+                                mode === 'signup' ? 'Create Account' :
+                                    mode === 'verify-2fa' ? 'Two-Factor Auth' : 'Reset Password'}
                         </h1>
                         <p className="text-gray-500 text-sm">
                             {mode === 'login' && "Enter your credentials to access your vault."}
                             {mode === 'signup' && "Join 10,000+ Indians mastering their money."}
+                            {mode === 'verify-2fa' && "Enter the 6-digit code from your authenticator app."}
                             {mode === 'forgot' && "We'll send you a link to get back into your account."}
                         </p>
                     </div>
@@ -138,6 +173,7 @@ const Auth = () => {
                         )}
 
                         <AnimatePresence mode="wait">
+                            {/* Signup Name Field */}
                             {mode === 'signup' && (
                                 <motion.div
                                     key="signup-name"
@@ -157,33 +193,65 @@ const Auth = () => {
                                     />
                                 </motion.div>
                             )}
+
+                            {/* Standard Email/Password Fields (Hidden for 2FA) */}
+                            {mode !== 'verify-2fa' && (
+                                <motion.div
+                                    key="standard-fields"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                >
+                                    <div className="relative mb-5">
+                                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" size={18} />
+                                        <input
+                                            type="email"
+                                            required={mode !== 'verify-2fa'}
+                                            placeholder="Email Address"
+                                            value={formData.email}
+                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                            className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-primary transition-all text-sm font-medium"
+                                        />
+                                    </div>
+
+                                    {mode !== 'forgot' && (
+                                        <div className="relative">
+                                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" size={18} />
+                                            <input
+                                                type="password"
+                                                required={mode !== 'verify-2fa'}
+                                                placeholder="Password"
+                                                value={formData.password}
+                                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                                className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-primary transition-all text-sm font-medium"
+                                            />
+                                        </div>
+                                    )}
+                                </motion.div>
+                            )}
+
+                            {/* 2FA Token Field */}
+                            {mode === 'verify-2fa' && (
+                                <motion.div
+                                    key="2fa-field"
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -20 }}
+                                    className="relative"
+                                >
+                                    <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 text-primary" size={18} />
+                                    <input
+                                        type="text"
+                                        required
+                                        maxLength="6"
+                                        placeholder="000 000"
+                                        value={formData.token}
+                                        onChange={(e) => setFormData({ ...formData, token: e.target.value.replace(/\D/g, '') })}
+                                        className="w-full bg-white/5 border border-primary/50 rounded-2xl py-4 pl-12 pr-4 text-white text-xl tracking-[0.5em] font-mono text-center focus:outline-none focus:border-primary transition-all shadow-[0_0_20px_rgba(255,215,0,0.1)]"
+                                    />
+                                </motion.div>
+                            )}
                         </AnimatePresence>
-
-                        <div className="relative">
-                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" size={18} />
-                            <input
-                                type="email"
-                                required
-                                placeholder="Email Address"
-                                value={formData.email}
-                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-primary transition-all text-sm font-medium"
-                            />
-                        </div>
-
-                        {mode !== 'forgot' && (
-                            <div className="relative">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" size={18} />
-                                <input
-                                    type="password"
-                                    required
-                                    placeholder="Password"
-                                    value={formData.password}
-                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-primary transition-all text-sm font-medium"
-                                />
-                            </div>
-                        )}
 
                         {mode === 'login' && (
                             <div className="text-right">
@@ -206,7 +274,9 @@ const Auth = () => {
                                 <div className="w-5 h-5 border-2 border-background border-t-transparent rounded-full animate-spin"></div>
                             ) : (
                                 <>
-                                    {mode === 'login' ? 'Login to Vault' : mode === 'signup' ? 'Secure my Gullak' : 'Send Reset Link'}
+                                    {mode === 'login' ? 'Login to Vault' :
+                                        mode === 'signup' ? 'Secure my Gullak' :
+                                            mode === 'verify-2fa' ? 'Verify Authenticator' : 'Send Reset Link'}
                                     <ArrowRight size={18} />
                                 </>
                             )}
@@ -214,12 +284,21 @@ const Auth = () => {
                     </form>
 
                     <p className="mt-10 text-center text-sm text-gray-500">
-                        {mode === 'login' ? "First time here?" : "Remembered your password?"}
+                        {mode === 'login' ? "First time here?" :
+                            mode === 'verify-2fa' ? "Lost your device?" : "Remembered your password?"}
+
                         <button
-                            onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
+                            onClick={() => {
+                                if (mode === 'verify-2fa') {
+                                    alert("Contact support at support@gullak.com to reset your 2FA.");
+                                } else {
+                                    setMode(mode === 'login' ? 'signup' : 'login');
+                                }
+                            }}
                             className="ml-2 text-primary font-bold hover:underline"
                         >
-                            {mode === 'login' ? 'Create Account' : 'Back to Login'}
+                            {mode === 'login' ? 'Create Account' :
+                                mode === 'verify-2fa' ? 'Get Help' : 'Back to Login'}
                         </button>
                     </p>
                 </div>
