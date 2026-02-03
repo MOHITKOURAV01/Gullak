@@ -65,6 +65,45 @@ const CardDemo = () => {
             fee: "₹5,000 (Waived on ₹10L spend)",
             rating: 4.7,
             image: ""
+        },
+        // --- USA ---
+        {
+            id: 101,
+            name: "Chase Sapphire Preferred",
+            type: "Credit Card",
+            color: "from-blue-800 to-blue-950",
+            category: "Travelers",
+            country: "🇺🇸 USA",
+            bank: "CHASE",
+            benefits: [
+                "60,000 Bonus Points after $4,000 spend",
+                "5x on travel purchased through Chase",
+                "3x on dining and streaming services",
+                "$50 Annual Ultimate Rewards Hotel Credit"
+            ],
+            bestFor: "Travel & Dining Rewards",
+            fee: "$95 Annual Fee",
+            rating: 4.9,
+            image: ""
+        },
+        {
+            id: 102,
+            name: "Amex Platinum",
+            type: "Credit Card",
+            color: "from-slate-300 to-slate-500",
+            category: "Luxury",
+            country: "🇺🇸 USA",
+            bank: "AMERICAN EXPRESS",
+            benefits: [
+                "80,000 Membership Rewards points",
+                "5x points on flights and hotels",
+                "$200 Hotel Credit & $200 Airline Credit",
+                "Global Lounge Collection access"
+            ],
+            bestFor: "Luxury Travel & Lifestyle",
+            fee: "$695 Annual Fee",
+            rating: 4.8,
+            image: ""
         }
     ];
 
