@@ -38,7 +38,8 @@ const VerifyOtp = () => {
                 setError(data.message || 'OTP verification failed');
             }
         } catch (err) {
-            setError('Failed to connect to server');
+            const baseUrl = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
+            setError(`Connection Error: Trying to reach ${baseUrl}. Please check VITE_API_URL in Vercel settings.`);
         } finally {
             setLoading(false);
         }
