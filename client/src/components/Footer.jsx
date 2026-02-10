@@ -9,7 +9,7 @@ const Footer = () => {
                     <div className="col-span-2">
                         <span className="text-xl font-bold">GULLAK</span>
                         <p className="text-gray-400 max-w-sm mb-8">
-                            Empowering Indian middle-class families with CA-style financial intelligence. Smart tracking, smarter growth.
+                            Empowering Indian families with expert financial intelligence. Smart tracking, smarter growth.
                         </p>
                         <div className="flex gap-4">
                             {[Twitter, Github, Linkedin, Mail].map((Icon, i) => (
@@ -44,7 +44,7 @@ const Footer = () => {
                 <div className="flex flex-col md:row justify-between items-center pt-8 border-t border-white/5 text-gray-500 text-sm gap-4">
                     <p>© 2026 GULLAK. All rights reserved.</p>
                     <div className="flex gap-8">
-                        <p>Made with ❤️ in India</p>
+                        <p>Made in Bharat | भारत में निर्मित</p>
                     </div>
                 </div>
             </div>
