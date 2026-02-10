@@ -230,7 +230,7 @@ app.post('/api/auth/login/2fa/send-email', async (req, res) => {
     }
 });
 
-// 2FA Setup: Generate Secret & QR
+// 2FA Setup: Generate Secret & QR (OPTIMIZED for < 1s response)
 app.post('/api/auth/2fa/setup', async (req, res) => {
     const { userId } = req.body;
     try {
@@ -243,17 +243,29 @@ app.post('/api/auth/2fa/setup', async (req, res) => {
 
         if (!user) return res.status(404).json({ message: 'User not found' });
 
+        // Speed Optimization: Generate secret instantly
         const secret = speakeasy.generateSecret({ length: 20, name: `Gullak (${user.email})` });
         user.tempSecret = secret.base32;
 
-        if (user.save) await user.save();
-        else fs.writeFileSync(DB_FILE, JSON.stringify(localDb, null, 2));
+        // Use a high-speed QR API for instant delivery (no server processing wait)
+        const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(secret.otpauth_url)}`;
 
-        QRCode.toDataURL(secret.otpauth_url, (err, data_url) => {
-            if (err) return res.status(500).json({ message: 'Error generating QR code' });
-            res.json({ secret: secret.base32, qrCode: data_url });
-        });
+        // FIRE AND FORGET: Save to DB in background, don't wait for it
+        const saveToDb = async () => {
+            try {
+                if (user.save) await user.save();
+                else fs.writeFileSync(DB_FILE, JSON.stringify(localDb, null, 2));
+                console.log(`[2FA] Secret saved in background for ${user.email}`);
+            } catch (saveErr) {
+                console.error("[2FA] Background save failed:", saveErr);
+            }
+        };
+        saveToDb();
+
+        // Return immediately
+        res.json({ secret: secret.base32, qrCode: qrCodeUrl });
     } catch (err) {
+        console.error("2FA Setup Error:", err);
         res.status(500).json({ message: '2FA Setup error' });
     }
 });
@@ -451,9 +463,14 @@ Use Hinglish. No bolding. Use points.
     }
 });
 
-// 3. Health Check
+// 3. Health Check (Pulse Endpoint)
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', server: 'Gullak Local Backend', storage: 'JSON File' });
+    res.json({
+        status: 'ok',
+        server: 'Gullak Production-Ready Backend',
+        timestamp: new Date().toISOString(),
+        storage: process.env.MONGODB_URI ? 'MongoDB' : 'Local JSON'
+    });
 });
 
 // Start Server
