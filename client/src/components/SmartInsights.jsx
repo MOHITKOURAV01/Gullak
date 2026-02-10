@@ -6,7 +6,7 @@ const SmartInsights = () => {
     const insights = [
         {
             title: "Spending Patterns",
-            description: "Automatically identify where your money leaks. AI Munshi flags subscriptions you forgot about.",
+            description: "Automatically identify where your money leaks. AI Advisor flags subscriptions you forgot about.",
             icon: <Brain className="text-primary" />,
             color: "peer-hover:text-primary",
             bg: "bg-primary/5"
@@ -53,7 +53,7 @@ const SmartInsights = () => {
                         Data-Driven <span className="text-gradient">Smart Insights</span>
                     </h2>
                     <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-                        Gullak isn't just a ledger. It's an advisor that analyzes thousands of data points to keep your financial health in the green.
+                        Gullak is more than just a ledger. It's your personal advisor that analyzes thousands of data points to keep your financial health in the green.
                     </p>
                 </motion.div>
             </div>

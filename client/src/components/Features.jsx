@@ -38,7 +38,7 @@ const Features = () => {
         {
             icon: SearchCheck,
             title: "Leak Detection",
-            description: "Find out where your money is silently leaking—from unused subscriptions to excessive online ordering habits."
+            description: "Find out where your money is silently leaking, from unused subscriptions to excessive online ordering habits."
         },
         {
             icon: BarChart3,
@@ -68,7 +68,7 @@ const Features = () => {
                 <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8">
                     <div className="max-w-2xl">
                         <h2 className="text-4xl lg:text-5xl font-bold mb-6">Designed for your <span className="text-gradient">financial peace.</span></h2>
-                        <p className="text-gray-400 text-lg">Every feature is crafted to move you one step closer to financial freedom, using logic trusted by Chartered Accountants.</p>
+                        <p className="text-gray-400 text-lg">Every feature is crafted to move you one step closer to financial freedom, using logic used by top financial experts.</p>
                     </div>
                     <button className="text-primary font-bold flex items-center gap-2 group">
                         See all features <Zap size={20} className="group-hover:fill-primary" />
