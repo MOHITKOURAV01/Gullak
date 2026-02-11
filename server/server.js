@@ -63,7 +63,9 @@ const userSchema = new mongoose.Schema({
         items: { type: Array, default: [] },
         income: { type: Number, default: 50000 },
         updatedAt: { type: Date, default: Date.now }
-    }
+    },
+    resetOtp: { type: String, default: null },
+    resetOtpExpires: { type: Date, default: null }
 });
 
 const User = mongoose.models.User || mongoose.model('User', userSchema);
